@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node --compiler-options '{\"skipLibCheck\": true}' --files index.ts",
+    "start": "ts-node --compiler-options '{\"skipLibCheck\": true}' --files src/server/index.ts",
     "build": "tsc -p .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
