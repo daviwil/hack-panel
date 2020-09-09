@@ -1,5 +1,5 @@
-import { Observable, Subscriber } from 'rxjs';
-import { google, youtube_v3 } from "googleapis";
+import { Observable, Subscriber } from "rxjs";
+import { YouTubeClient } from "./youTubeClient";
 
 export type ChatMessage = {
   message: string;
@@ -10,7 +10,7 @@ export class ChatPoller {
   private subscriber: Subscriber<ChatMessage>;
   public observable: Observable<ChatMessage>;
 
-  constructor(private liveChatId: string, private youtubeClient: youtube_v3.Youtube) {
+  constructor(private liveChatId: string, private youTubeClient: YouTubeClient) {
     this.observable = new Observable(subscriber => this.subscriber = subscriber);
   }
 
@@ -19,28 +19,27 @@ export class ChatPoller {
   }
 
   private getNextMessages(pageToken?: string) {
-    this.youtubeClient.liveChatMessages.list({
-      liveChatId: this.liveChatId,
-      pageToken,
-      part: ["snippet"]
-    }).then(response => {
-      const chatMessages = response.data.items;
-      const nextPageToken = response.data.nextPageToken;
-      const delayUntilNextMs = response.data.pollingIntervalMillis;
-      
-      for (const message of chatMessages) {
-        this.subscriber.next({
-          sender: 'Person',
-          message: message.snippet.textMessageDetails?.messageText,
-        });
-      }
+    this.youTubeClient
+      .getChatMessages(this.liveChatId, pageToken)
+      .then(
+        response => {
+          const chatMessages = response.items;
+          const nextPageToken = response.nextPageToken;
+          const delayUntilNextMs = response.pollingIntervalMillis;
 
-      if (nextPageToken) {
-        const pollInterval = setInterval(() => {
-          clearInterval(pollInterval);
-          this.getNextMessages(nextPageToken);
-        }, delayUntilNextMs + 150);
-      }
+          for (const message of chatMessages) {
+            this.subscriber.next({
+              sender: 'Person',
+              message: message.snippet.textMessageDetails?.messageText,
+            });
+          }
+
+          if (nextPageToken) {
+            const pollInterval = setInterval(() => {
+              clearInterval(pollInterval);
+              this.getNextMessages(nextPageToken);
+            }, delayUntilNextMs + 150);
+          }
     });
   }
 }

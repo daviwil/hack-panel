@@ -1,15 +1,14 @@
 import * as fs from "fs";
 import { Server } from "./server";
 import { ChatPoller } from "./chatPoller";
-
-import { google, youtube_v3 } from "googleapis";
+import { YouTubeClient } from "./youTubeClient";
 import { Credentials, OAuth2Client } from "google-auth-library";
 
 require('dotenv').config();
 
 async function authenticateClient(server: Server): Promise<OAuth2Client> {
   const oauthClient =
-    new google.auth.OAuth2(
+    new OAuth2Client(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
       "http://localhost:3000/oauth2_callback");
@@ -27,7 +26,7 @@ async function authenticateClient(server: Server): Promise<OAuth2Client> {
       ]
     });
 
-    console.log("Please go to the following URL and log in:", authUrl, "\n\n");
+    console.log("*** Please go to the following URL and log in:\n\n", authUrl, "\n");
 
     let authKeyResolve = undefined;
     const authKeyPromise = new Promise<Credentials>((resolve, reject) => {
@@ -65,37 +64,23 @@ async function main() {
   const oauthClient = await authenticateClient(server);
 
   // 3. Start polling live data
-  const youtube = google.youtube({
-    auth: oauthClient,
-    version: 'v3'
-  });
+  const client = new YouTubeClient(oauthClient);
+  const currentStream = await client.getCurrentStream();
 
-  const b = await youtube.liveBroadcasts.list({
-    mine: true,
-    // broadcastStatus: 'active',
-    part: [ "snippet", "status"]
-  });
+  if (!currentStream) {
+    // TODO: Poll until stream starts?
+    console.error("There is no current live stream, exiting...\n");
+    process.exit(1);
+  }
 
-  const liveStream = b.data.items.filter(b => b.status!.lifeCycleStatus === "live")[0];
-  // console.log("Broadcast:\n\n", liveStream);
-  const videoId = liveStream.id;
-
-  const r = await youtube.videos.list({
-    id: [videoId],
-    part: ['liveStreamingDetails']
-  });
-
-  const videos = r.data.items;
-  const thisVideo = videos[0];
-
-  console.log("Concurrent viewers:", thisVideo.liveStreamingDetails?.concurrentViewers);
+  console.log("Viewers:", await client.getViewerCount(currentStream.id));
 
   let chatMessageResolve = undefined;
   const chatMessagePromise = new Promise<any[]>((resolve, reject) => {
     chatMessageResolve = resolve;
   });
 
-  const chatPoller = new ChatPoller(liveStream.snippet?.liveChatId, youtube);
+  const chatPoller = new ChatPoller(currentStream.liveChatId, client);
 
   chatPoller.observable.forEach(m => {
     server.broadcastMessage(m);
@@ -113,12 +98,6 @@ async function main() {
   });
 
   chatPoller.startPolling();
-
-  // console.log("Chat messages:", chatResponse.data.items);
-
-  // Acquire an auth client, and bind it to all future calls
-  // const authClient = await auth.getClient();
-  // google.options({ auth: authClient });
 }
 
 main().then(() => console.log("Done!")).catch(err => console.error("ERROR:", err));

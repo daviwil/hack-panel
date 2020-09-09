@@ -29,7 +29,7 @@ export class Server {
     this.app.use('/', this.router);
 
     this.httpServer = this.app.listen(this.httpPort, () => {
-      console.log(`Example app listening at http://localhost:${this.httpPort}`)
+      console.log(`Hack Panel activated: http://localhost:${this.httpPort}\n`);
     });
   }
 

@@ -5,10 +5,5 @@
     "sourceMap": true,
     "outDir": "./public"
   },
-  "files": [
-    "index.ts",
-    "chatPoller.ts",
-    "server.ts"
-  ],
   "exclude": ["node_modules"]
 }
