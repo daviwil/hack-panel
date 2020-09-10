@@ -1,5 +1,11 @@
 
 body {
-    color: #FFFFFF;
-    font-size: 3em;
+    /* color: #FFFFFF; */
+    font-size: 1.5em;
+}
+
+.chatWidget {
+    width: 700px;
+    display: flex;
+    justify-content: flex-end;
 }

@@ -51,7 +51,7 @@ export class YouTubeClient {
       params: {
         liveChatId,
         pageToken,
-        part: "snippet"
+        part: "snippet,authorDetails"
       }
     });
 

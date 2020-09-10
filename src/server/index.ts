@@ -83,18 +83,13 @@ async function main() {
   const chatPoller = new ChatPoller(currentStream.liveChatId, client);
 
   chatPoller.observable.forEach(m => {
-    server.broadcastMessage(m);
+    server.broadcastMessage('chatMessage', m);
   });
 
-  server.router.get('/', (req, res) => {
-    // chatMessagePromise.then((messages: any[]) => {
-    //   let chatString = "";
-    //   for (const m of messages) {
-    //     chatString += m.snippet.textMessageDetails.messageText + "<br />";
-    //   }
-    //   res.send(`<html><head><link rel="stylesheet" type="text/css" href="page.css"></head><body><h1>Hello World!</h1>${chatString}<script src="client.js"></script></body></html>`);
-    // });
-    res.send(`<html><head><link rel="stylesheet" type="text/css" href="page.css"></head><body><h1>Hello World!</h1><script src="client.js"></script></body></html>`);
+  const indexHtml = fs.readFileSync("public/index.html").toString();
+
+  server.router.get('/screen-overlay', (req, res) => {
+    res.send(indexHtml);
   });
 
   chatPoller.startPolling();

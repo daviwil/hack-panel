@@ -29,8 +29,8 @@ export class ChatPoller {
 
           for (const message of chatMessages) {
             this.subscriber.next({
-              sender: 'Person',
-              message: message.snippet.textMessageDetails?.messageText,
+              sender: message.authorDetails.displayName,
+              message: message.snippet.textMessageDetails.messageText,
             });
           }
 

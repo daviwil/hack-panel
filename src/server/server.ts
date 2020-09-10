@@ -33,9 +33,12 @@ export class Server {
     });
   }
 
-  public broadcastMessage(message: any) {
+  public broadcastMessage(messageType: string, message: any) {
     for (const client of this.wsClients) {
-      client.send(JSON.stringify(message));
+      client.send(JSON.stringify({
+        type: messageType,
+        message
+      }));
     }
   }
 }
